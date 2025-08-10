@@ -1,7 +1,8 @@
-from flask import Flask, request
+from flask import Flask, request,jsonify
 import time,logging
 from PIL import Image
 import pytesseract
+import io
 # from flask_cors import CORS
 
 app = Flask(__name__)
@@ -72,6 +73,19 @@ def handle_raw_data():
         return f"❌ Error: {str(e)}", 500
 
 
+@app.route("/ocr", methods=["POST"])
+def ocr():
+    if not request.data:
+        return jsonify({"error": "No binary data received"}), 400
+
+    try:
+        image = Image.open(io.BytesIO(request.data))
+        text = pytesseract.image_to_string(image)
+        return jsonify({"text": text.strip()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+# -----------------------------------------
 
 if __name__ == '__main__':
     app.run(debug=True, port=3001)
